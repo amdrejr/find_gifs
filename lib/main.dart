@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'pages/home_page.dart';
 
 void main(List<String> args) {
-  runApp(const MaterialApp(
+  runApp(MaterialApp(
     title: 'Buscador de Gifs',
-    home: HomePage(),
+    home: const HomePage(),
+    theme: ThemeData(hintColor: Colors.black),
   ));
 }
