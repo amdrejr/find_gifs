@@ -37,6 +37,12 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: Image.network(
+            "https://media.giphy.com/media/26uf1A051CPF6TKFi/giphy.gif"),
+      ),
+    );
   }
 }
