@@ -33,24 +33,11 @@ class _HomePageState extends State<HomePage> {
     return json.decode(response.body); // Pegando o corpo da requisição
   }
 
-  Future<Map> puxando() async {
+  Future<Map> _getRandomGif() async {
     http.Response? response;
     response = await http.get(Uri.parse(
         'https://api.giphy.com/v1/gifs/random?api_key=8FjQCGsNZfNLfDIuyud5N5oafX8J3niV&tag=loop&rating=g'));
     return json.decode(response.body);
-  }
-
-  String _futureBackGroud() {
-    String resultado =
-        'https://media.giphy.com/media/3ohhwvOnBaE8TtyBaw/giphy.gif';
-
-    puxando().then((valor) {
-      resultado = valor['data']['url'];
-    });
-
-    print('resultado: $resultado');
-
-    return resultado;
   }
 
   late TextEditingController searchController = TextEditingController();
@@ -63,7 +50,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    String texto = _futureBackGroud();
     return Scaffold(
       backgroundColor: const Color(0xFFffbbd5),
       extendBodyBehindAppBar: true,
@@ -86,66 +72,94 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            fit: BoxFit.cover,
-            repeat: ImageRepeat.repeat,
-            scale: .1,
-            alignment: Alignment.center,
-            image: NetworkImage(texto),
-          ),
+      body: FutureBuilder(
+          future: _getRandomGif(),
+          builder: (BuildContext context, AsyncSnapshot snapshot) {
+            switch (snapshot.connectionState) {
+              case ConnectionState.waiting:
+              case ConnectionState.none:
+                return const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation(Colors.cyan),
+                    strokeWidth: 5,
+                  ),
+                );
+
+              default:
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: Text('Erro ao carregar..'),
+                  );
+                } else {
+                  print('URL RANDOM: ${snapshot.data!['data']['url']}');
+                  return corpo(snapshot);
+                }
+            }
+          }),
+    );
+  }
+
+  Widget corpo(AsyncSnapshot snapshot) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          fit: BoxFit.cover,
+          repeat: ImageRepeat.repeat,
+          scale: .4,
+          alignment: Alignment.center,
+          image: NetworkImage(
+              snapshot.data['data']['images']['fixed_width']['url']),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 100),
-              TextField(
-                controller: searchController,
-                textCapitalization:
-                    TextCapitalization.characters, // deixar texto em uppercase
-                decoration: const InputDecoration(
-                  filled: true,
-                  fillColor: Color(0xCFfae1eb),
-                  hintText: 'BUSQUE AQUI',
-                  hintStyle: TextStyle(color: Colors.pink),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(8))),
-                ),
-                style: const TextStyle(
-                    color: Color(0xff660606), fontWeight: FontWeight.w900),
-                textAlign: TextAlign.center,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const SizedBox(height: 100),
+            TextField(
+              controller: searchController,
+              textCapitalization:
+                  TextCapitalization.characters, // deixar texto em uppercase
+              decoration: const InputDecoration(
+                filled: true,
+                fillColor: Color(0xCFfae1eb),
+                hintText: 'BUSQUE AQUI',
+                hintStyle: TextStyle(color: Colors.pink),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8))),
               ),
-              const SizedBox(height: 20),
-              Expanded(
-                child: FutureBuilder(
-                  future: _getGifs(),
-                  builder: (context, snapshot) {
-                    switch (snapshot.connectionState) {
-                      case ConnectionState.waiting:
-                      case ConnectionState.none:
+              style: const TextStyle(
+                  color: Color(0xff660606), fontWeight: FontWeight.w900),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: FutureBuilder(
+                future: _getGifs(),
+                builder: (BuildContext context, AsyncSnapshot snapshot) {
+                  switch (snapshot.connectionState) {
+                    case ConnectionState.waiting:
+                    case ConnectionState.none:
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation(Colors.purple),
+                          strokeWidth: 5,
+                        ),
+                      );
+                    default:
+                      if (snapshot.hasError) {
                         return const Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation(Colors.purple),
-                            strokeWidth: 5,
-                          ),
+                          child: Text('Erro ao carregar..'),
                         );
-                      default:
-                        if (snapshot.hasError) {
-                          return const Center(
-                            child: Text('Erro ao carregar..'),
-                          );
-                        } else {
-                          return _createGifTable(context, snapshot);
-                        }
-                    }
-                  },
-                ),
+                      } else {
+                        return _createGifTable(context, snapshot);
+                      }
+                  }
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
